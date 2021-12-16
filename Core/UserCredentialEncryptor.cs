@@ -29,7 +29,7 @@ namespace Core {
 			aes.Key = hashedPassword;
 			var decryptor = aes.CreateDecryptor();
 			try {
-				string? decryptedPassword = decryptor.Decrypt(userCredential.EncryptedPassword);
+				string decryptedPassword = decryptor.Decrypt(userCredential.EncryptedPassword);
 				if (password != decryptedPassword)
 					return null;
 			}
