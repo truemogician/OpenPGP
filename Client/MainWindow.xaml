@@ -5,15 +5,14 @@
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
 		mc:Ignorable="d"
-		Title="PGP加密客户端" Height="300" Width="300" ResizeMode="NoResize">
+		Title="PGP加密客户端" Height="200" Width="320" ResizeMode="NoResize">
 	<Grid>
 		<Grid.RowDefinitions>
-			<RowDefinition Height="32" />
-			<RowDefinition Height="2.2*" />
-			<RowDefinition Height="1*" />
+			<RowDefinition Height="40" />
+			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 		<ToolBarTray Grid.Row="0">
-			<ToolBar MaxHeight="32">
+			<ToolBar MaxHeight="40">
 				<ToggleButton Name="LoginButton" ToolTip="登录" Click="LoginButtonClick">
 					<svgc:SvgViewbox Source="Assets/Login.svg" />
 				</ToggleButton>
@@ -41,13 +40,21 @@
 				</Button>
 			</ToolBar>
 		</ToolBarTray>
-		<Image Grid.Row="1" Source="Assets/Background.png" Margin="0,25,0,20" />
-		<Label Grid.Row="2" FontSize="20" FontFamily="仿宋" HorizontalAlignment="Center">
-			<TextBlock>
-				拖拽文件至此
-				<LineBreak />
-				进行加密解密
-			</TextBlock>
-		</Label>
+		<Grid Grid.Row="1">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="5" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<Grid Grid.Column="0">
+				<Image Grid.Column="0" Source="Assets/Lock.png" Margin="20" />
+			</Grid>
+			<StackPanel Grid.Column="1" Orientation="Horizontal">
+				<Separator Width="2" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
+			</StackPanel>
+			<Grid Grid.Column="2">
+				<Image Source="Assets/Key.png" Margin="20" />
+			</Grid>
+		</Grid>
 	</Grid>
 </Window>
