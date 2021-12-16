@@ -189,7 +189,7 @@ namespace Client {
 
 		private void EncryptDirectoryButtonClick(object sender, RoutedEventArgs args) {
 			_folderDialog.Description = "请选择需要加密的文件夹";
-			if (_folderDialog.ShowDialog() != System.Windows.Forms.DialogResult.Cancel)
+			if (_folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.Cancel)
 				return;
 			var path = _folderDialog.SelectedPath;
 			var user = GetUser();
