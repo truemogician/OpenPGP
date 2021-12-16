@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Numerics;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Windows;
@@ -29,14 +30,13 @@ namespace Client {
 				Directory.CreateDirectory(UserCredentialDirectory);
 		}
 
-		public static SHA256 Hasher { get; } = SHA256.Create();
+		private static SHA256 Hasher { get; } = SHA256.Create();
 
 		private UserCredential? LoggedUser { get; set; }
 
-		private static string GetUserFilePath(string username) {
-			var hashedUsername = Hasher.ComputeHash(username.ToRawBytes()).ToRawString();
-			return Path.Combine(UserCredentialDirectory, $"{hashedUsername}.usr");
-		}
+		private static string GetUserFilePath(string username) => GetUserFilePath(Hasher.ComputeHash(username.ToRawBytes()));
+
+		public static string GetUserFilePath(byte[] hashedUsername) => Path.Combine(UserCredentialDirectory, $"{new BigInteger(hashedUsername):X}.usr");
 
 		private static LoginResult Login(string username, string password, out UserCredential? user) {
 			user = null;
@@ -96,17 +96,15 @@ namespace Client {
 
 		private void LoginButtonClick(object sender, RoutedEventArgs args) {
 			if (LoginButton.IsChecked == true) {
+				LoginButton.IsChecked = false;
 				var userInfo = LoginDialog.ShowDialog();
-				if (userInfo is null) {
-					LoginButton.IsChecked = false;
+				if (userInfo is null)
 					return;
-				}
 				var user = Login(userInfo.Value.Username, userInfo.Value.Password);
-				if (user is null)
-					LoginButton.IsChecked = false;
-				else {
+				if (user is not null) {
+					LoginButton.IsChecked = true;
 					LoggedUser = user;
-					LoginButton.ToolTip = $"用户{userInfo.Value.Username}已登录";
+					LoginButton.ToolTip = $"用户\"{userInfo.Value.Username}\"已登录";
 				}
 			}
 			else {
@@ -121,7 +119,7 @@ namespace Client {
 				return;
 			var path = GetUserFilePath(userInfo.Value.Username);
 			if (File.Exists(path)) {
-				MessageBox.Show($"用户{userInfo.Value.Username}已存在", "用户已存在", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				MessageBox.Show($"用户\"{userInfo.Value.Username}\"已存在", "用户已存在", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 				return;
 			}
 			var user = UserCredential.Create(userInfo.Value.Username, userInfo.Value.Password);
@@ -132,9 +130,15 @@ namespace Client {
 			var username = GetUser()?.Username;
 			if (username is null)
 				return;
-			var confirmed = MessageBox.Show($"确定要删除用户{username}吗？若之前没有备份用户文件，删除之后所有该用户加密的文件将永远无法再被读取", "警告", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
-			if (confirmed == MessageBoxResult.OK)
+			var confirmed = MessageBox.Show($"确定要删除用户\"{username}\"吗？若之前没有备份用户文件，删除之后所有该用户加密的文件将永远无法再被读取", "警告", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+			if (confirmed == MessageBoxResult.OK) {
 				File.Delete(GetUserFilePath(username));
+				if (LoggedUser is not null) {
+					LoggedUser = null;
+					LoginButton.IsChecked = false;
+					LoginButton.ToolTip = "登录";
+				}
+			}
 		}
 
 		private void ImportUserButtonClick(object sender, RoutedEventArgs args) {
@@ -153,7 +157,7 @@ namespace Client {
 				MessageBox.Show($"文件或已损坏", "格式错误", MessageBoxButton.OK, MessageBoxImage.Error);
 				return;
 			}
-			File.Copy(path, Path.Combine(UserCredentialDirectory, $"{user.HashedUsername}.usr"));
+			File.Copy(path, GetUserFilePath(user.HashedUsername));
 		}
 
 		private void ExportUserButtonClick(object sender, RoutedEventArgs args) {
@@ -209,7 +213,7 @@ namespace Client {
 				user.DecryptEntity(path);
 			}
 			catch (AuthenticationException) {
-				MessageBox.Show($"文件并非由该用户加密，无法解密", "认证失败", MessageBoxButton.OK, MessageBoxImage.Error);
+				MessageBox.Show("文件并非由该用户加密，无法解密", "认证失败", MessageBoxButton.OK, MessageBoxImage.Error);
 			}
 		}
 
