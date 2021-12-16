@@ -38,14 +38,14 @@ namespace Core {
 	}
 
 	public class EncryptedUserCredential {
-		internal EncryptedUserCredential(string encryptedUsername, string encryptedPassword, byte[] encryptedPublicKey, byte[] encryptedPrivateKey) {
-			EncryptedUsername = encryptedUsername;
+		internal EncryptedUserCredential(string hashedUsername, string encryptedPassword, byte[] encryptedPublicKey, byte[] encryptedPrivateKey) {
+			HashedUsername = hashedUsername;
 			EncryptedPassword = encryptedPassword;
 			EncryptedPublicKey = encryptedPublicKey;
 			EncryptedPrivateKey = encryptedPrivateKey;
 		}
 
-		public string EncryptedUsername { get; }
+		public string HashedUsername { get; }
 
 		public string EncryptedPassword { get; }
 
@@ -72,7 +72,7 @@ namespace Core {
 
 		public void Save(string path) {
 			using var writer = new StreamWriter(path);
-			writer.WriteLine(EncryptedUsername);
+			writer.WriteLine(HashedUsername);
 			writer.WriteLine(EncryptedPassword);
 			writer.WriteLine(EncryptedPublicKey);
 			writer.WriteLine(EncryptedPrivateKey);
