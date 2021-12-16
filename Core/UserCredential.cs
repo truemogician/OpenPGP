@@ -35,11 +35,11 @@ namespace Core {
 
 		public static UserCredential Create(string username, string password) => new(username, password, RSA.Create());
 
-		public EncryptedUserCredential Encrypt(UserCredentialEncryptor encryptor) => encryptor.Encrypt(this);
+		public EncryptedUserCredential Encrypt() => UserCredentialEncryptor.Encrypt(this);
 	}
 
 	public class EncryptedUserCredential {
-		public EncryptedUserCredential(string encryptedUsername, string encryptedPassword, byte[] encryptedPublicKey, byte[] encryptedPrivateKey) {
+		internal EncryptedUserCredential(string encryptedUsername, string encryptedPassword, byte[] encryptedPublicKey, byte[] encryptedPrivateKey) {
 			EncryptedUsername = encryptedUsername;
 			EncryptedPassword = encryptedPassword;
 			EncryptedPublicKey = encryptedPublicKey;
@@ -80,6 +80,6 @@ namespace Core {
 			writer.Close();
 		}
 
-		public UserCredential Decrypt(UserCredentialEncryptor decryptor) => decryptor.Decrypt(this);
+		public UserCredential? Decrypt(string username, string password) => UserCredentialEncryptor.Decrypt(this, username, password);
 	}
 }

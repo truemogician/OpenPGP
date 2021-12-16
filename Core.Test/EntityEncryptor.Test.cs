@@ -6,9 +6,11 @@ using NUnit.Framework;
 
 namespace Core.Test {
 	public class EntityEncryptorTests {
-		public static readonly UserCredentialEncryptor UserEncryptor = new(Aes.Create());
+		public const string Username = "username";
 
-		public static readonly UserCredential User = UserCredential.Create("username", "password");
+		public const string Password = "password";
+
+		public static readonly UserCredential User = UserCredential.Create(Username, Password);
 
 		[TestCase("test.txt")]
 		public void EncryptTest(string path) {
@@ -57,10 +59,7 @@ namespace Core.Test {
 				return false;
 			Array.Sort(subEntities1);
 			Array.Sort(subEntities2);
-			for (var i = 0; i < subEntities1.Length; ++i)
-				if (!CompareEntities(subEntities1[i], subEntities2[i]))
-					return false;
-			return true;
+			return !subEntities1.Where((t, i) => !CompareEntities(t, subEntities2[i])).Any();
 		}
 	}
 }
