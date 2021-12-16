@@ -2,7 +2,6 @@
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Core {
 	public static class EntityEncryptor {
@@ -25,8 +24,8 @@ namespace Core {
 			}
 			var randomAes = Aes.Create();
 			using (var writer = new FileStream(dstPath, FileMode.Create, FileAccess.Write)) {
-				var encryptedKey = user.RSA.Encrypt(randomAes.Key, RSAEncryptionPadding.Pkcs1);
-				var encryptedIV = user.RSA.Encrypt(randomAes.IV, RSAEncryptionPadding.Pkcs1);
+				byte[]? encryptedKey = user.RSA.Encrypt(randomAes.Key, RSAEncryptionPadding.Pkcs1);
+				byte[]? encryptedIV = user.RSA.Encrypt(randomAes.IV, RSAEncryptionPadding.Pkcs1);
 				writer.Write(BitConverter.GetBytes(encryptedKey.Length));
 				writer.Write(BitConverter.GetBytes(encryptedIV.Length));
 				writer.Write(encryptedKey);

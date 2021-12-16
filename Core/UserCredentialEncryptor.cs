@@ -1,5 +1,4 @@
 ﻿using System.Security.Cryptography;
-using System.Text;
 
 namespace Core {
 	public static class UserCredentialEncryptor {
@@ -28,10 +27,10 @@ namespace Core {
 			aes.Key = hashedPassword;
 			var decryptor = aes.CreateDecryptor();
 			try {
-				var decryptedUsername = decryptor.Decrypt(userCredential.EncryptedUsername);
+				string? decryptedUsername = decryptor.Decrypt(userCredential.EncryptedUsername);
 				if (username != decryptedUsername)
 					return null;
-				var decryptedPassword = decryptor.Decrypt(userCredential.EncryptedPassword);
+				string? decryptedPassword = decryptor.Decrypt(userCredential.EncryptedPassword);
 				if (password != decryptedPassword)
 					return null;
 			}

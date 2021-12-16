@@ -1,10 +1,11 @@
 ﻿<Window x:Class="Client.RegisterDialog"
-		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-		mc:Ignorable="d"
-		Title="注册" Height="250" Width="350" WindowStyle="ToolWindow" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="注册" Height="250" Width="350" WindowStyle="ToolWindow" WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
 	<Grid Margin="20, 20, 20, 20">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="1*" />
@@ -19,10 +20,13 @@
 		<Label Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontSize="18" Margin="0,0,0,5">用户名：</Label>
 		<Label Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" FontSize="18" Margin="0,5,0,5">密码：</Label>
 		<Label Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" FontSize="18" Margin="0,5,0,0">重复密码：</Label>
-		<TextBox Name ="UsernameTextBox"  Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" FontSize="18" TextWrapping="NoWrap" AcceptsReturn="False" Margin="0,0,0,5" KeyUp="TextBoxKeyUp" />
-		<PasswordBox Name="PasswordTextBox" Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" FontSize="18" Margin="0,5,0,5" KeyUp="TextBoxKeyUp" GotFocus="PasswordBoxGotFocus" />
-		<PasswordBox Name="RepeatPasswordTextBox" Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" FontSize="18" Margin="0,5,0,0" KeyUp="TextBoxKeyUp" />
-		<Grid Grid.Row ="3" Grid.Column="0" Grid.ColumnSpan="2">
+		<TextBox Name="UsernameTextBox" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" FontSize="18"
+		         TextWrapping="NoWrap" AcceptsReturn="False" Margin="0,0,0,5" KeyUp="TextBoxKeyUp" />
+		<PasswordBox Name="PasswordTextBox" Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" FontSize="18"
+		             Margin="0,5,0,5" KeyUp="TextBoxKeyUp" GotFocus="PasswordBoxGotFocus" />
+		<PasswordBox Name="RepeatPasswordTextBox" Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" FontSize="18"
+		             Margin="0,5,0,0" KeyUp="TextBoxKeyUp" />
+		<Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="1*" />
 				<ColumnDefinition Width="1*" />

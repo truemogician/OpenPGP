@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace Core.Test {
 	public class UserCredentialTests {
