@@ -5,11 +5,12 @@
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
 		mc:Ignorable="d"
-		Title="PGP加密客户端" Height="350" Width="350">
+		Title="PGP加密客户端" Height="300" Width="300" ResizeMode="NoResize">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="32" />
-			<RowDefinition Height="*" />
+			<RowDefinition Height="2.2*" />
+			<RowDefinition Height="1*" />
 		</Grid.RowDefinitions>
 		<ToolBarTray Grid.Row="0">
 			<ToolBar MaxHeight="32">
@@ -40,6 +41,13 @@
 				</Button>
 			</ToolBar>
 		</ToolBarTray>
-		<Image Grid.Row="1" Source="Assets/background.png" />
+		<Image Grid.Row="1" Source="Assets/Background.png" Margin="0,25,0,20" />
+		<Label Grid.Row="2" FontSize="20" FontFamily="仿宋" HorizontalAlignment="Center">
+			<TextBlock>
+				拖拽文件至此
+				<LineBreak />
+				进行加密解密
+			</TextBlock>
+		</Label>
 	</Grid>
 </Window>
