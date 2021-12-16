@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using System.IO;
+using System.Reflection;
+using NUnit.Framework;
 
 namespace Core.Test {
 	public class UserCredentialTests {
@@ -14,6 +16,22 @@ namespace Core.Test {
 			Assert.AreEqual(user.Password, decryptedUser.Password);
 			Assert.AreEqual(user.PublicKey, decryptedUser.PublicKey);
 			Assert.AreEqual(user.PrivateKey, decryptedUser.PrivateKey);
+		}
+
+		[TestCase("username", "password")]
+		public void SaveLoadTest(string username, string password) {
+			const string tmpPath = @"tmp.usr";
+			var user = UserCredential.Create(username, password);
+			var encrypted = user.Encrypt();
+			try {
+				encrypted.Save(tmpPath);
+				var loaded = EncryptedUserCredential.Load(tmpPath);
+				foreach (var property in typeof(EncryptedUserCredential).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+					Assert.AreEqual(property.GetValue(encrypted), property.GetValue(loaded));
+			}
+			finally {
+				File.Delete(tmpPath);
+			}
 		}
 	}
 }
