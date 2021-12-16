@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-	<OutputType>WinExe</OutputType>
-	<TargetFramework>net5.0-windows</TargetFramework>
-	  <Nullable>enable</Nullable>
-	<UseWPF>true</UseWPF>
-	<ApplicationIcon>Icon.ico</ApplicationIcon>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net5.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<ApplicationIcon>Icon.ico</ApplicationIcon>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<Content Include="Assets\*">
@@ -15,20 +15,25 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="SharpVectors" Version="1.7.7" />
+		<PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.0" />
+		<PackageReference Include="SharpVectors" Version="1.7.7" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="RegisterDialog.xaml.cs">
-	    <SubType>Code</SubType>
-	  </Compile>
+		<ProjectReference Include="..\Core\Core.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Page Update="RegisterDialog.xaml">
-	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-	    <SubType>Designer</SubType>
-	  </Page>
+		<Compile Update="RegisterDialog.xaml.cs">
+			<SubType>Code</SubType>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="RegisterDialog.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
 	</ItemGroup>
 
 </Project>

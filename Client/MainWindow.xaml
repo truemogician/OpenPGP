@@ -1,11 +1,11 @@
 ﻿<Window x:Class="Client.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
-        mc:Ignorable="d"
-        Title="PGP加密客户端" Height="350" Width="350">
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+		mc:Ignorable="d"
+		Title="PGP加密客户端" Height="350" Width="350">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="32" />
@@ -13,29 +13,29 @@
 		</Grid.RowDefinitions>
 		<ToolBarTray Grid.Row="0">
 			<ToolBar MaxHeight="32">
-				<ToggleButton Name="LoginButton" ToolTip="登录">
+				<ToggleButton Name="LoginButton" ToolTip="登录" Click="LoginButtonClick">
 					<svgc:SvgViewbox Source="Assets/Login.svg" />
 				</ToggleButton>
-				<Button Name="CreateUserButton" ToolTip="创建新用户">
+				<Button Name="CreateUserButton" ToolTip="创建新用户" Click="CreateUserButtonClick">
 					<svgc:SvgViewbox Source="Assets/AddUser.svg" />
 				</Button>
-				<Button Name="DeleteUserButton" ToolTip="删除用户">
+				<Button Name="DeleteUserButton" ToolTip="删除用户" Click="DeleteUserButtonClick">
 					<svgc:SvgViewbox Source="Assets/DeleteUser.svg" />
 				</Button>
-				<Button Name="ImportUserButton" ToolTip="导入用户">
+				<Button Name="ImportUserButton" ToolTip="导入用户" Click="ImportUserButtonClick">
 					<svgc:SvgViewbox Source="Assets/ImportUser.svg" />
 				</Button>
-				<Button Name="ExportUserButton" ToolTip="导出用户">
+				<Button Name="ExportUserButton" ToolTip="导出用户" Click="ExportUserButtonClick">
 					<svgc:SvgViewbox Source="Assets/ExportUser.svg" />
 				</Button>
 				<Separator />
-				<Button Name="EncryptFileButton" ToolTip="加密文件">
+				<Button Name="EncryptFileButton" ToolTip="加密文件" Click="EncryptFileButtonClick">
 					<Image Source="Assets/EncryptFile.png" />
 				</Button>
-				<Button Name="EncryptFolderButton" ToolTip="加密文件夹">
+				<Button Name="EncryptFolderButton" ToolTip="加密文件夹" Click="EncryptDirectoryButtonClick">
 					<Image Source="Assets/EncryptFolder.png" />
 				</Button>
-				<Button Name="DecryptButton" ToolTip="解密文件">
+				<Button Name="DecryptButton" ToolTip="解密文件" Click="DecryptFileButtonClick">
 					<Image Source="Assets/DecryptFile.png" />
 				</Button>
 			</ToolBar>
