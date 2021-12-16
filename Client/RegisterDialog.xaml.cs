@@ -6,11 +6,12 @@ namespace Client {
 	/// <summary>
 	///     Interaction logic for LoginDialog.xaml
 	/// </summary>
-	public partial class RegisterDialog : Window {
-		private bool _canceled;
+	public partial class RegisterDialog {
+		private bool _canceled = true;
 
 		public RegisterDialog() {
 			InitializeComponent();
+			UsernameTextBox.Focus();
 		}
 
 		public new static (string Username, string Password)? ShowDialog() {
@@ -42,18 +43,17 @@ namespace Client {
 				RepeatPasswordTextBox.Clear();
 				PasswordTextBox.Background = RepeatPasswordTextBox.Background = Brushes.Coral;
 			}
-			else
+			else {
+				_canceled = false;
 				Close();
+			}
 		}
 
-		private void CancelButtonClick(object sender, RoutedEventArgs args) {
-			_canceled = true;
-			Close();
-		}
+		private void CancelButtonClick(object sender, RoutedEventArgs args) => Close();
 
 		private void PasswordBoxGotFocus(object sender, RoutedEventArgs args) {
-			PasswordTextBox.Background.ClearValue(BackgroundProperty);
-			RepeatPasswordTextBox.Background.ClearValue(BackgroundProperty);
+			PasswordTextBox.Background = SystemColors.WindowBrush;
+			RepeatPasswordTextBox.Background = SystemColors.WindowBrush;
 		}
 	}
 }
