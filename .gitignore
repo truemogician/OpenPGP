@@ -5,6 +5,7 @@
 
 # Custom files
 /*.Test/**/*.Playground.cs
+/Client/Images
 
 # User-specific files
 *.rsuser
