@@ -1,0 +1,46 @@
+﻿<Window x:Class="Client.MainWindow"
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:Client"
+		xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+		mc:Ignorable="d"
+		Title="PGP加密客户端" Height="350" Width="350">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="32" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<ToolBarTray Grid.Row="0">
+			<ToolBar MaxHeight="32">
+				<ToggleButton Name="LoginButton" ToolTip="登录">
+					<svgc:SvgViewbox Source="Assets/Login.svg" />
+				</ToggleButton>
+				<Button Name="CreateUserButton" ToolTip="创建新用户">
+					<svgc:SvgViewbox Source="Assets/AddUser.svg" />
+				</Button>
+				<Button Name="DeleteUserButton" ToolTip="删除用户">
+					<svgc:SvgViewbox Source="Assets/DeleteUser.svg" />
+				</Button>
+				<Button Name="ImportUserButton" ToolTip="导入用户">
+					<svgc:SvgViewbox Source="Assets/ImportUser.svg" />
+				</Button>
+				<Button Name="ExportUserButton" ToolTip="导出用户">
+					<svgc:SvgViewbox Source="Assets/ExportUser.svg" />
+				</Button>
+				<Separator />
+				<Button Name="EncryptFileButton" ToolTip="加密文件">
+					<Image Source="Assets/EncryptFile.png" />
+				</Button>
+				<Button Name="EncryptFolderButton" ToolTip="加密文件夹">
+					<Image Source="Assets/EncryptFolder.png" />
+				</Button>
+				<Button Name="DecryptButton" ToolTip="解密文件">
+					<Image Source="Assets/DecryptFile.png" />
+				</Button>
+			</ToolBar>
+		</ToolBarTray>
+		<Image Grid.Row="1" Source="Assets/background.png" />
+	</Grid>
+</Window>
