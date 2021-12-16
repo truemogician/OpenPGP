@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Linq;
+using System.Security.Cryptography;
 
 namespace Core {
 	public static class UserCredentialEncryptor {
@@ -12,7 +13,7 @@ namespace Core {
 			aes.Key = hashedPassword;
 			var encryptor = aes.CreateEncryptor();
 			return new EncryptedUserCredential(
-				hashedUsername.ToRawString(),
+				hashedUsername,
 				encryptor.Encrypt(userCredential.Password),
 				encryptor.Encrypt(userCredential.PublicKey),
 				encryptor.Encrypt(userCredential.PrivateKey)
@@ -21,7 +22,7 @@ namespace Core {
 
 		public static UserCredential? Decrypt(EncryptedUserCredential userCredential, string username, string password) {
 			byte[] hashedUsername = Hasher.ComputeHash(username.ToRawBytes());
-			if (userCredential.HashedUsername != hashedUsername.ToRawString())
+			if (!userCredential.HashedUsername.SequenceEqual(hashedUsername))
 				return null;
 			byte[] hashedPassword = Hasher.ComputeHash(password.ToRawBytes());
 			var aes = Aes.Create();

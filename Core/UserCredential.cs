@@ -38,14 +38,14 @@ namespace Core {
 	}
 
 	public class EncryptedUserCredential {
-		internal EncryptedUserCredential(string hashedUsername, string encryptedPassword, byte[] encryptedPublicKey, byte[] encryptedPrivateKey) {
+		internal EncryptedUserCredential(byte[] hashedUsername, string encryptedPassword, byte[] encryptedPublicKey, byte[] encryptedPrivateKey) {
 			HashedUsername = hashedUsername;
 			EncryptedPassword = encryptedPassword;
 			EncryptedPublicKey = encryptedPublicKey;
 			EncryptedPrivateKey = encryptedPrivateKey;
 		}
 
-		public string HashedUsername { get; }
+		public byte[] HashedUsername { get; }
 
 		public string EncryptedPassword { get; }
 
@@ -56,14 +56,17 @@ namespace Core {
 		public static EncryptedUserCredential Load(string path) {
 			if (!File.Exists(path))
 				throw new FileNotFoundException($"User credential file {path} not found");
-			using var reader = new StreamReader(path);
+			using var reader = new FileStream(path, FileMode.Open, FileAccess.Read);
 			try {
-				return new EncryptedUserCredential(
-					reader.ReadLine()!,
-					reader.ReadLine()!,
-					reader.ReadLine()!.ToRawBytes(),
-					reader.ReadLine()!.ToRawBytes()
-				);
+				var hashedUsername = reader.Read(32);
+				byte[] length = new byte[4];
+				reader.Read(length, 0, 4);
+				var encryptedPassword = reader.Read(BitConverter.ToInt32(length));
+				reader.Read(length, 0, 4);
+				var encryptedPublicKey = reader.Read(BitConverter.ToInt32(length));
+				reader.Read(length, 0, 4);
+				var encryptedPrivateKey = reader.Read(BitConverter.ToInt32(length));
+				return new EncryptedUserCredential(hashedUsername, encryptedPassword.ToRawString(), encryptedPublicKey, encryptedPrivateKey);
 			}
 			catch (Exception ex) {
 				throw new FormatException($"User credential file {path} is corrupted", ex);
@@ -71,12 +74,15 @@ namespace Core {
 		}
 
 		public void Save(string path) {
-			using var writer = new StreamWriter(path);
-			writer.WriteLine(HashedUsername);
-			writer.WriteLine(EncryptedPassword);
-			writer.WriteLine(EncryptedPublicKey);
-			writer.WriteLine(EncryptedPrivateKey);
-			writer.Close();
+			using var writer = new FileStream(path, FileMode.Create, FileAccess.Write);
+			writer.Write(HashedUsername);
+			var passwordBytes = EncryptedPassword.ToRawBytes();
+			writer.Write(BitConverter.GetBytes(passwordBytes.Length));
+			writer.Write(passwordBytes);
+			writer.Write(BitConverter.GetBytes(EncryptedPublicKey.Length));
+			writer.Write(EncryptedPublicKey);
+			writer.Write(BitConverter.GetBytes(EncryptedPrivateKey.Length));
+			writer.Write(EncryptedPrivateKey);
 		}
 
 		public UserCredential? Decrypt(string username, string password) => UserCredentialEncryptor.Decrypt(this, username, password);
