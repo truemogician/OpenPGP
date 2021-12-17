@@ -5,12 +5,12 @@
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
 		mc:Ignorable="d"
-		Title="PGP加密客户端" Height="200" Width="320" ResizeMode="NoResize" DragEnter="ContainerDragEnter">
+		Title="PGP加密客户端" Height="220" Width="320" ResizeMode="NoResize">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="40" />
 			<RowDefinition Height="*" />
-			<RowDefinition Height="20" />
+			<RowDefinition Height="25" />
 		</Grid.RowDefinitions>
 		<ToolBarTray Grid.Row="0">
 			<ToolBar MaxHeight="40">
@@ -41,21 +41,17 @@
 				</Button>
 			</ToolBar>
 		</ToolBarTray>
-		<Grid Grid.Row="1" DragEnter="ContainerDragEnter">
+		<Grid Grid.Row="1">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="*" />
 				<ColumnDefinition Width="5" />
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
-			<Grid Name="EncryptDragDropGrid" Grid.Column="0" AllowDrop="True" DragEnter="GridDragEnter" Drop="GridDrop">
-				<Image Grid.Column="0" Source="Assets/Lock.png" Margin="20" />
-			</Grid>
+			<Image Name="EncryptionArea" Grid.Column="0" Source="Assets/Lock.png" MaxHeight="80" AllowDrop="True" DragEnter="DragDropAreaDragEnter" Drop="DragDropAreaDrop" />
 			<StackPanel Grid.Column="1" Orientation="Horizontal">
 				<Separator Width="2" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 			</StackPanel>
-			<Grid Name="DecryptDragDropGrid" Grid.Column="2" AllowDrop="True" DragEnter="GridDragEnter" Drop="GridDrop">
-				<Image Source="Assets/Key.png" Margin="20" />
-			</Grid>
+			<Image Name="DecryptionArea" Grid.Column="2" Source="Assets/Key.png" MaxHeight="80" AllowDrop="True" DragEnter="DragDropAreaDragEnter" Drop="DragDropAreaDrop" />
 		</Grid>
 		<StatusBar Grid.Row ="2">
 			<StatusBar.ItemsPanel>

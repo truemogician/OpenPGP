@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Linq;
 using System.Numerics;
 using System.Security.Authentication;
 using System.Security.Cryptography;
@@ -76,7 +75,7 @@ namespace Client {
 		private void Encrypt(UserCredential user, string[] paths) {
 			Task.Run(
 				() => {
-					Dispatcher.Invoke(() => StatusTextBlock.Text = paths.Length == 1 ? $"开始加密文件/文件夹{Path.GetFileName(paths[0])}" : $"开始加密${Path.GetFileName(paths[0])}等${paths.Length}个文件/文件夹");
+					Dispatcher.Invoke(() => StatusTextBlock.Text = paths.Length == 1 ? $"开始加密文件/文件夹{Path.GetFileName(paths[0])}" : $"开始加密{Path.GetFileName(paths[0])}等{paths.Length}个文件/文件夹");
 					string? dstPath = null;
 					try {
 						dstPath = user.EncryptEntities(paths);
@@ -101,7 +100,7 @@ namespace Client {
 								break;
 						}
 					}
-					Dispatcher.Invoke(() => StatusTextBlock.Text = $"加密文件{dstPath}已保存");
+					Dispatcher.Invoke(() => StatusTextBlock.Text = $"加密文件{Path.GetFileName(dstPath)}已保存");
 				}
 			);
 		}
@@ -109,7 +108,7 @@ namespace Client {
 		private void Decrypt(UserCredential user, string path) {
 			Task.Run(
 				() => {
-					Dispatcher.Invoke(() => StatusTextBlock.Text = $"开始解密文件{path}");
+					Dispatcher.Invoke(() => StatusTextBlock.Text = $"开始解密文件{Path.GetFileName(path)}");
 					string? dstPath = null;
 					try {
 						dstPath = user.DecryptEntity(path);
@@ -133,7 +132,7 @@ namespace Client {
 							}
 						);
 					}
-					Dispatcher.Invoke(() => StatusTextBlock.Text = $"文件已解密到{dstPath}");
+					Dispatcher.Invoke(() => StatusTextBlock.Text = $"文件已解密到{Path.GetFileName(dstPath)}");
 				}
 			);
 		}
@@ -168,6 +167,7 @@ namespace Client {
 			}
 			var user = UserCredential.Create(userInfo.Value.Username, userInfo.Value.Password);
 			user.Encrypt().Save(path);
+			StatusTextBlock.Text = $"用户\"{userInfo.Value.Username}\"已创建";
 		}
 
 		private void DeleteUserButtonClick(object sender, RoutedEventArgs args) {
@@ -182,6 +182,7 @@ namespace Client {
 					LoginButton.IsChecked = false;
 					LoginButton.ToolTip = "登录";
 				}
+				StatusTextBlock.Text = $"用户\"{username}\"已删除";
 			}
 		}
 
@@ -198,10 +199,16 @@ namespace Client {
 				user = EncryptedUserCredential.Load(path);
 			}
 			catch (InvalidDataException) {
-				MessageBox.Show($"文件或已损坏", "格式错误", MessageBoxButton.OK, MessageBoxImage.Error);
+				MessageBox.Show("文件或已损坏", "格式错误", MessageBoxButton.OK, MessageBoxImage.Error);
 				return;
 			}
-			File.Copy(path, GetUserFilePath(user.HashedUsername));
+			var targetPath = GetUserFilePath(user.HashedUsername);
+			if (File.Exists(targetPath)) {
+				MessageBox.Show("该用户已存在", "导入冲突", MessageBoxButton.OK, MessageBoxImage.Error);
+				return;
+			}
+			File.Copy(path, targetPath);
+			StatusTextBlock.Text = "用户已导入";
 		}
 
 		private void ExportUserButtonClick(object sender, RoutedEventArgs args) {
@@ -215,6 +222,7 @@ namespace Client {
 			if (_saveDialog.ShowDialog() != true)
 				return;
 			File.Copy(GetUserFilePath(username), _saveDialog.FileName);
+			StatusTextBlock.Text = $"用户\"{username}\"已导出";
 		}
 
 		private void EncryptFileButtonClick(object sender, RoutedEventArgs args) {
@@ -260,33 +268,35 @@ namespace Client {
 			}
 		}
 
-		private void ContainerDragEnter(object sender, DragEventArgs args) => args.Effects = DragDropEffects.All;
-
-		private void GridDragEnter(object sender, DragEventArgs args) {
+		private void DragDropAreaDragEnter(object sender, DragEventArgs args) {
 			string[]? paths = args.GetFileNames();
 			if (paths is null) {
 				args.Effects = DragDropEffects.None;
-				return;
+				goto End;
 			}
-			if (sender.Equals(EncryptDragDropGrid))
-				args.Effects = DragDropEffects.All;
+			if (sender.Equals(EncryptionArea))
+				args.Effects = DragDropEffects.Copy;
 			else {
 				if (paths.Length == 1 && Path.GetExtension(paths[0]) == ".pgp")
-					args.Effects = DragDropEffects.All;
+					args.Effects = DragDropEffects.Copy;
 				else
 					args.Effects = DragDropEffects.None;
 			}
+		End:
+			args.Handled = true;
 		}
 
-		private void GridDrop(object sender, DragEventArgs args) {
-			if (args.AllowedEffects.HasFlag(DragDropEffects.Copy) && args.GetFileNames() is { } paths) {
+		private void DragDropAreaDrop(object sender, DragEventArgs args) {
+			if (args.Effects.HasFlag(DragDropEffects.Copy) && args.GetFileNames() is { } paths) {
+				if (sender.Equals(DecryptionArea) && (paths.Length != 1 || Path.GetExtension(paths[0]) != ".pgp"))
+					return;
 				var user = GetUser();
 				if (user is null)
 					return;
-				if (sender.Equals(EncryptDragDropGrid))
+				if (sender.Equals(EncryptionArea))
 					Encrypt(user, paths);
 				else
-					Decrypt(user, paths.Single());
+					Decrypt(user, paths[0]);
 			}
 		}
 
