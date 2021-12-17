@@ -10,22 +10,24 @@ namespace Core {
 	public static class EntityEncryptor {
 		/// <exception cref="FileSystemEntityNotFoundException" />
 		/// <exception cref="FileExistedException" />
-		public static string EncryptEntity(this UserCredential user, string srcPath, string? dstPath = null) {
-			bool isDirectory = Directory.Exists(srcPath);
-			if (!isDirectory && !File.Exists(srcPath))
-				throw new FileSystemEntityNotFoundException(path: srcPath);
-			dstPath ??= srcPath + ".pgp";
+		public static string EncryptEntities(this UserCredential user, string[] srcPaths, string? dstPath = null) {
+			if (srcPaths.Length == 0)
+				throw new ArgumentException(null, nameof(srcPaths));
+			if (srcPaths.FirstOrDefault(path => !Directory.Exists(path) && !File.Exists(path)) is { } notFoundPath)
+				throw new FileSystemEntityNotFoundException(path: notFoundPath);
+			dstPath ??= (srcPaths.Length == 1 ? srcPaths[0] : Path.GetDirectoryName(srcPaths[0])) + ".pgp";
 			if (File.Exists(dstPath))
 				throw new FileExistedException(path: dstPath);
 			string tmpFile;
 			do {
 				tmpFile = Path.GetRandomFileName();
 			} while (File.Exists(tmpFile));
-			if (isDirectory)
-				ZipFile.CreateFromDirectory(srcPath, tmpFile, CompressionLevel.Fastest, true);
-			else {
-				using var zip = ZipFile.Open(tmpFile, ZipArchiveMode.Create);
-				zip.CreateEntryFromFile(srcPath, Path.GetFileName(srcPath));
+			using (var archive = ZipFile.Open(tmpFile, ZipArchiveMode.Create)) {
+				foreach (var path in srcPaths)
+					if (File.Exists(path))
+						archive.CreateEntryFromFile(path);
+					else
+						archive.CreateEntryFromDirectory(path);
 			}
 			var randomAes = Aes.Create();
 			using (var writer = new FileStream(dstPath, FileMode.Create, FileAccess.Write)) {
@@ -43,8 +45,10 @@ namespace Core {
 		}
 
 		/// <exception cref="FileNotFoundException" />
+		/// <exception cref="FileExistedException" />
 		/// <exception cref="AuthenticationException" />
-		public static string DecryptEntity(this UserCredential user, string srcPath, string? dstDirectory = null) {
+		/// <exception cref="InvalidDataException" />
+		public static string DecryptEntity(this UserCredential user, string srcPath, string? dstDirectory = null, ConflictStrategy strategy = ConflictStrategy.Throw) {
 			if (!File.Exists(srcPath))
 				throw new FileNotFoundException($"File {srcPath} not found");
 			dstDirectory ??= Path.GetDirectoryName(srcPath)!;
@@ -64,9 +68,72 @@ namespace Core {
 				tmpFile = Path.GetRandomFileName();
 			} while (File.Exists(tmpFile));
 			File.WriteAllBytes(tmpFile, aes.Decrypt(reader.ReadBytes()));
-			ZipFile.ExtractToDirectory(tmpFile, dstDirectory);
+			ZipArchive archive;
+			try {
+				archive = ZipFile.OpenRead(tmpFile);
+			}
+			catch (InvalidDataException) {
+				throw new InvalidDataException($"Encrypted file {srcPath} is corrupted");
+			}
+			archive.ExtractToDirectory(dstDirectory, strategy);
+			archive.Dispose();
 			File.Delete(tmpFile);
 			return dstDirectory;
+		}
+
+		/// <exception cref="FileExistedException" />
+		public static void ExtractToDirectory(this ZipArchive archive, string destinationDirectoryName, ConflictStrategy conflictStrategy) {
+			var conflictFile = archive.Entries.FirstOrDefault(e => File.Exists(Path.Combine(destinationDirectoryName, e.FullName)));
+			bool hasConflict = conflictFile is not null;
+			if (hasConflict)
+				switch (conflictStrategy) {
+					case ConflictStrategy.Abort: return;
+					case ConflictStrategy.Throw: throw new FileExistedException(path: conflictFile!.FullName);
+				}
+			else {
+				archive.ExtractToDirectory(destinationDirectoryName);
+				return;
+			}
+			foreach (var entry in archive.Entries) {
+				var path = Path.Combine(destinationDirectoryName, entry.FullName);
+				if (Path.GetDirectoryName(path) is { } dir && !Directory.Exists(dir))
+					Directory.CreateDirectory(dir);
+				else if (hasConflict && File.Exists(path))
+					switch (conflictStrategy) {
+						case ConflictStrategy.Skip: continue;
+						case ConflictStrategy.Rename:
+							path = GetNonConflictingName(path);
+							break;
+					}
+				if (entry.Name == string.Empty)
+					continue;
+				entry.ExtractToFile(path, conflictStrategy == ConflictStrategy.Overwrite);
+			}
+		}
+
+		private static string GetNonConflictingName(string path) {
+			if (!File.Exists(path))
+				return path;
+			string folder = Path.GetDirectoryName(path)!;
+			string name = Path.GetFileNameWithoutExtension(path);
+			string ext = Path.GetExtension(path);
+			for (var i = 1;; ++i) {
+				path = Path.Combine(folder, $"{name}({i}){ext}");
+				if (!File.Exists(path))
+					return path;
+			}
+		}
+
+		public enum ConflictStrategy : byte {
+			Throw,
+
+			Abort,
+
+			Skip,
+
+			Overwrite,
+
+			Rename
 		}
 	}
 }

@@ -11,23 +11,13 @@ namespace Core.Test {
 
 		public static readonly UserCredential User = UserCredential.Create(Username, Password);
 
-		[TestCase("test.txt")]
-		public void EncryptTest(string path) {
-			User.EncryptEntity(path);
-		}
-
-		[TestCase("test.txt.pgp")]
-		public void DecryptTest(string path) {
-			User.DecryptEntity(path);
-		}
-
 		[TestCase("test-file")]
 		[TestCase("test-directory")]
 		public void EnDecryptTest(string path) {
 			string pgpFile = path + ".pgp";
 			if (File.Exists(pgpFile))
 				File.Delete(pgpFile);
-			string pgp = User.EncryptEntity(path, pgpFile);
+			string pgp = User.EncryptEntities(new[] {path}, pgpFile);
 			string dstDirectory = Path.Combine(Path.GetDirectoryName(pgp)!, "result");
 			if (Directory.Exists(dstDirectory))
 				Directory.Delete(dstDirectory, true);

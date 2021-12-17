@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -30,6 +33,25 @@ namespace Core {
 		public static byte[] Decrypt(this Aes aes, byte[] cipherText) => aes.CreateDecryptor().Decrypt(cipherText);
 
 		public static string Decrypt(this Aes aes, string cipherText) => aes.CreateDecryptor().Decrypt(cipherText);
+	}
+
+	public static class ZipArchiveExtensions {
+		public static ZipArchiveEntry CreateEntryFromFile(this ZipArchive archive, string sourceFileName) => archive.CreateEntryFromFile(sourceFileName, Path.GetFileName(sourceFileName));
+
+		public static ZipArchiveEntry[] CreateEntryFromDirectory(this ZipArchive archive, string sourceDirectoryName, string? entryName = null, CompressionLevel compressionLevel = new()) {
+			entryName ??= Path.GetFileName(sourceDirectoryName);
+			if (!entryName.EndsWith("/"))
+				entryName += "/";
+			var result = new List<ZipArchiveEntry>();
+			var files = Directory.GetFiles(sourceDirectoryName);
+			var directories = Directory.GetDirectories(sourceDirectoryName);
+			if (files.Length + directories.Length == 0)
+				result.Add(archive.CreateEntry(entryName));
+			result.AddRange(files.Select(file => archive.CreateEntryFromFile(file, Path.Combine(entryName, Path.GetFileName(file)))));
+			foreach (var directory in Directory.GetDirectories(sourceDirectoryName))
+				result.AddRange(archive.CreateEntryFromDirectory(directory, Path.Combine(entryName, Path.GetFileName(directory))));
+			return result.ToArray();
+		}
 	}
 
 	public static class MiscellaneousExtensions {

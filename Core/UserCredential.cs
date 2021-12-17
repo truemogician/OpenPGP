@@ -53,6 +53,7 @@ namespace Core {
 
 		public byte[] EncryptedPrivateKey { get; }
 
+		/// <exception cref="InvalidDataException" />
 		public static EncryptedUserCredential Load(string path) {
 			if (!File.Exists(path))
 				throw new FileNotFoundException($"User credential file {path} not found");
@@ -69,7 +70,7 @@ namespace Core {
 				return new EncryptedUserCredential(hashedUsername, encryptedPassword.ToRawString(), encryptedPublicKey, encryptedPrivateKey);
 			}
 			catch (Exception ex) {
-				throw new FormatException($"User credential file {path} is corrupted", ex);
+				throw new InvalidDataException($"User credential file {path} is corrupted", ex);
 			}
 		}
 
