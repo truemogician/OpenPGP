@@ -15,7 +15,7 @@ namespace Core {
 				throw new ArgumentException(null, nameof(srcPaths));
 			if (srcPaths.FirstOrDefault(path => !Directory.Exists(path) && !File.Exists(path)) is { } notFoundPath)
 				throw new FileSystemEntityNotFoundException(path: notFoundPath);
-			dstPath ??= (srcPaths.Length == 1 ? srcPaths[0] : Path.GetDirectoryName(srcPaths[0])) + ".pgp";
+			dstPath ??= (srcPaths.Length == 1 ? srcPaths[0] : Path.Combine(Path.GetDirectoryName(srcPaths[0])!, Path.GetFileName(Path.GetDirectoryName(srcPaths[0])!))) + ".pgp";
 			if (File.Exists(dstPath))
 				throw new FileExistedException(path: dstPath);
 			string tmpFile;
