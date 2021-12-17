@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Numerics;
 using System.Security.Authentication;
 using System.Security.Cryptography;
@@ -75,8 +76,9 @@ namespace Client {
 		private void Encrypt(UserCredential user, string[] paths) {
 			Task.Run(
 				() => {
-					Dispatcher.Invoke(() => StatusTextBlock.Text = paths.Length == 1 ? $"开始加密文件/文件夹{Path.GetFileName(paths[0])}" : $"开始加密{Path.GetFileName(paths[0])}等{paths.Length}个文件/文件夹");
+					Dispatcher.Invoke(() => StatusTextBlock.Text = paths.Length == 1 ? $"开始加密文件/文件夹\"{Path.GetFileName(paths[0])}\"" : $"开始加密\"{Path.GetFileName(paths[0])}\"等{paths.Length}个文件/文件夹");
 					string? dstPath = null;
+					var startTime = DateTime.Now;
 					try {
 						dstPath = user.EncryptEntities(paths);
 					}
@@ -96,11 +98,12 @@ namespace Client {
 								_saveDialog.FileName = (paths.Length == 1 ? Path.GetFileName(paths[0]) : Path.GetDirectoryName(paths[0])) + ".pgp";
 								if (_saveDialog.ShowDialog() != true)
 									return;
+								startTime = DateTime.Now;
 								dstPath = user.EncryptEntities(paths, _saveDialog.FileName);
 								break;
 						}
 					}
-					Dispatcher.Invoke(() => StatusTextBlock.Text = $"加密文件{Path.GetFileName(dstPath)}已保存");
+					Dispatcher.Invoke(() => StatusTextBlock.Text = $"加密文件{Path.GetFileName(dstPath)}已保存，耗时{(DateTime.Now - startTime).TotalSeconds:F}秒");
 				}
 			);
 		}
@@ -110,6 +113,7 @@ namespace Client {
 				() => {
 					Dispatcher.Invoke(() => StatusTextBlock.Text = $"开始解密文件{Path.GetFileName(path)}");
 					string? dstPath = null;
+					var startTime = DateTime.Now;
 					try {
 						dstPath = user.DecryptEntity(path);
 					}
@@ -122,6 +126,7 @@ namespace Client {
 							Dispatcher.Invoke(() => StatusTextBlock.Text = "文件解密已取消");
 							return;
 						}
+						startTime = DateTime.Now;
 						dstPath = user.DecryptEntity(
 							path,
 							null,
@@ -132,7 +137,7 @@ namespace Client {
 							}
 						);
 					}
-					Dispatcher.Invoke(() => StatusTextBlock.Text = $"文件已解密到{Path.GetFileName(dstPath)}");
+					Dispatcher.Invoke(() => StatusTextBlock.Text = $"文件已解密到\"{Path.GetFileName(dstPath)}\"，耗时{(DateTime.Now - startTime).TotalSeconds:F}秒");
 				}
 			);
 		}
@@ -219,6 +224,7 @@ namespace Client {
 			_saveDialog.AddExtension = true;
 			_saveDialog.DefaultExt = ".usr";
 			_saveDialog.FileName = $"{username}.usr";
+			_saveDialog.Filter = "加密用户凭证文件(*.usr)|*.usr";
 			if (_saveDialog.ShowDialog() != true)
 				return;
 			File.Copy(GetUserFilePath(username), _saveDialog.FileName);
@@ -256,16 +262,10 @@ namespace Client {
 			_openDialog.CheckFileExists = true;
 			if (_openDialog.ShowDialog() != true)
 				return;
-			var path = _openDialog.FileName;
 			var user = GetUser();
 			if (user is null)
 				return;
-			try {
-				user.DecryptEntity(path);
-			}
-			catch (AuthenticationException) {
-				MessageBox.Show("文件并非由该用户加密，无法解密", "认证失败", MessageBoxButton.OK, MessageBoxImage.Error);
-			}
+			Decrypt(user, _openDialog.FileName);
 		}
 
 		private void DragDropAreaDragEnter(object sender, DragEventArgs args) {
