@@ -15,25 +15,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Content Include="*.ico">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.0" />
 		<PackageReference Include="SharpVectors" Version="1.7.7" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Core\Core.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Compile Update="RegisterDialog.xaml.cs">
-			<SubType>Code</SubType>
-		</Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Page Update="RegisterDialog.xaml">
-			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-			<SubType>Designer</SubType>
-		</Page>
 	</ItemGroup>
 
 </Project>
