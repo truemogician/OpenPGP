@@ -5,6 +5,10 @@ namespace Core {
 	public static class UserCredentialEncryptor {
 		public static SHA256 Hasher { get; } = SHA256.Create();
 
+		/// <summary>
+		///     Encrypt <paramref name="userCredential" />
+		/// </summary>
+		/// <returns>Encrypted user credential</returns>
 		public static EncryptedUserCredential Encrypt(UserCredential userCredential) {
 			byte[] hashedUsername = Hasher.ComputeHash(userCredential.Username.ToRawBytes());
 			byte[] hashedPassword = Hasher.ComputeHash(userCredential.Password.ToRawBytes());
@@ -20,6 +24,14 @@ namespace Core {
 			);
 		}
 
+		/// <summary>
+		///     Decrypt <paramref name="userCredential" /> with <paramref name="username" /> and <paramref name="password" />
+		///     provided
+		/// </summary>
+		/// <returns>
+		///     <see cref="UserCredential" /> if <paramref name="username" /> and <paramref name="password" /> are correct,
+		///     else <see langword="null" />
+		/// </returns>
 		public static UserCredential? Decrypt(EncryptedUserCredential userCredential, string username, string password) {
 			byte[] hashedUsername = Hasher.ComputeHash(username.ToRawBytes());
 			if (!userCredential.HashedUsername.SequenceEqual(hashedUsername))

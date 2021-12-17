@@ -3,6 +3,13 @@ using System.Security.Cryptography;
 
 namespace Core {
 	public static class RSAParametersCalculator {
+		/// <summary>
+		///     Construct <see cref="RSAParameters" /> using prime <paramref name="p" />, <paramref name="q" /> and exponent
+		///     <paramref name="e" />
+		/// </summary>
+		/// <param name="p">One prime integer</param>
+		/// <param name="q">Another prime integer</param>
+		/// <param name="e">Random exponent</param>
 		public static RSAParameters Calculate(byte[] p, byte[] q, byte[] e) {
 			var pp = new BigInteger(p);
 			var qq = new BigInteger(q);
@@ -20,6 +27,9 @@ namespace Core {
 			};
 		}
 
+		/// <summary>
+		///     Calculate <paramref name="a" />'s multiplicative inverse to modulus <paramref name="p" />
+		/// </summary>
 		public static BigInteger GetInverse(this BigInteger a, BigInteger p) {
 			BigInteger i = p, v = 0, d = 1;
 			while (a > 0) {

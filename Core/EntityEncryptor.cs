@@ -8,6 +8,13 @@ using TrueMogician.Exceptions;
 
 namespace Core {
 	public static class EntityEncryptor {
+		/// <summary>
+		///     Encrypt <paramref name="srcPaths" /> and save the encrypted file to <paramref name="dstPath" />
+		/// </summary>
+		/// <param name="user">User credential used for encryption</param>
+		/// <param name="srcPaths">Paths of entities to be encrypted</param>
+		/// <param name="dstPath">Path where the encrypted file will be saved.</param>
+		/// <returns>Path where the encrypted file is saved</returns>
 		/// <exception cref="FileSystemEntityNotFoundException" />
 		/// <exception cref="FileExistedException" />
 		public static string EncryptEntities(this UserCredential user, string[] srcPaths, string? dstPath = null) {
@@ -44,11 +51,19 @@ namespace Core {
 			return dstPath;
 		}
 
+		/// <summary>
+		///     Decrypt <paramref name="srcPath" /> to <paramref name="dstDirectory" />
+		/// </summary>
+		/// <param name="user">User credential used for decryption</param>
+		/// <param name="srcPath">Path of the encrypted file</param>
+		/// <param name="dstDirectory">Path where decrypted entities will be saved</param>
+		/// <param name="conflictStrategy">Controls the action to take when decrypted entities conflict with existing files</param>
+		/// <returns>Path of the directory where decrypted entities are saved</returns>
 		/// <exception cref="FileNotFoundException" />
 		/// <exception cref="FileExistedException" />
 		/// <exception cref="AuthenticationException" />
 		/// <exception cref="InvalidDataException" />
-		public static string DecryptEntity(this UserCredential user, string srcPath, string? dstDirectory = null, ConflictStrategy strategy = ConflictStrategy.Throw) {
+		public static string DecryptEntity(this UserCredential user, string srcPath, string? dstDirectory = null, ZipArchiveExtensions.ConflictStrategy conflictStrategy = ZipArchiveExtensions.ConflictStrategy.Throw) {
 			if (!File.Exists(srcPath))
 				throw new FileNotFoundException($"File {srcPath} not found");
 			dstDirectory ??= Path.GetDirectoryName(srcPath)!;
@@ -75,65 +90,10 @@ namespace Core {
 			catch (InvalidDataException) {
 				throw new InvalidDataException($"Encrypted file {srcPath} is corrupted");
 			}
-			archive.ExtractToDirectory(dstDirectory, strategy);
+			archive.ExtractToDirectory(dstDirectory, conflictStrategy);
 			archive.Dispose();
 			File.Delete(tmpFile);
 			return dstDirectory;
-		}
-
-		/// <exception cref="FileExistedException" />
-		public static void ExtractToDirectory(this ZipArchive archive, string destinationDirectoryName, ConflictStrategy conflictStrategy) {
-			var conflictFile = archive.Entries.FirstOrDefault(e => File.Exists(Path.Combine(destinationDirectoryName, e.FullName)));
-			bool hasConflict = conflictFile is not null;
-			if (hasConflict)
-				switch (conflictStrategy) {
-					case ConflictStrategy.Abort: return;
-					case ConflictStrategy.Throw: throw new FileExistedException(path: conflictFile!.FullName);
-				}
-			else {
-				archive.ExtractToDirectory(destinationDirectoryName);
-				return;
-			}
-			foreach (var entry in archive.Entries) {
-				var path = Path.Combine(destinationDirectoryName, entry.FullName);
-				if (Path.GetDirectoryName(path) is { } dir && !Directory.Exists(dir))
-					Directory.CreateDirectory(dir);
-				else if (hasConflict && File.Exists(path))
-					switch (conflictStrategy) {
-						case ConflictStrategy.Skip: continue;
-						case ConflictStrategy.Rename:
-							path = GetNonConflictingName(path);
-							break;
-					}
-				if (entry.Name == string.Empty)
-					continue;
-				entry.ExtractToFile(path, conflictStrategy == ConflictStrategy.Overwrite);
-			}
-		}
-
-		private static string GetNonConflictingName(string path) {
-			if (!File.Exists(path))
-				return path;
-			string folder = Path.GetDirectoryName(path)!;
-			string name = Path.GetFileNameWithoutExtension(path);
-			string ext = Path.GetExtension(path);
-			for (var i = 1;; ++i) {
-				path = Path.Combine(folder, $"{name}({i}){ext}");
-				if (!File.Exists(path))
-					return path;
-			}
-		}
-
-		public enum ConflictStrategy : byte {
-			Throw,
-
-			Abort,
-
-			Skip,
-
-			Overwrite,
-
-			Rename
 		}
 	}
 }

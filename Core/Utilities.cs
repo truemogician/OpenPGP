@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using TrueMogician.Exceptions;
 
 namespace Core {
 	public static class AesExtensions {
@@ -36,8 +37,13 @@ namespace Core {
 	}
 
 	public static class ZipArchiveExtensions {
+		/// <inheritdoc cref="ZipFileExtensions.CreateEntryFromFile(ZipArchive, string, string)" />
 		public static ZipArchiveEntry CreateEntryFromFile(this ZipArchive archive, string sourceFileName) => archive.CreateEntryFromFile(sourceFileName, Path.GetFileName(sourceFileName));
 
+		/// <summary>
+		///     Archives a directory and its content by compressing it and adding it to <paramref name="archive" />
+		/// </summary>
+		/// <inheritdoc cref="ZipFileExtensions.CreateEntryFromFile(ZipArchive, string, string, CompressionLevel)" />
 		public static ZipArchiveEntry[] CreateEntryFromDirectory(this ZipArchive archive, string sourceDirectoryName, string? entryName = null, CompressionLevel compressionLevel = new()) {
 			entryName ??= Path.GetFileName(sourceDirectoryName);
 			if (!entryName.EndsWith("/"))
@@ -52,21 +58,105 @@ namespace Core {
 				result.AddRange(archive.CreateEntryFromDirectory(directory, Path.Combine(entryName, Path.GetFileName(directory))));
 			return result.ToArray();
 		}
+
+		/// <param name="conflictStrategy">Controls the action to take when decrypted entities conflict with existing files</param>
+		/// <inheritdoc cref="ZipFileExtensions.ExtractToDirectory(ZipArchive, string)" />
+		/// <exception cref="FileExistedException" />
+		public static void ExtractToDirectory(this ZipArchive archive, string destinationDirectoryName, ConflictStrategy conflictStrategy) {
+			var conflictFile = archive.Entries.FirstOrDefault(e => File.Exists(Path.Combine(destinationDirectoryName, e.FullName)));
+			bool hasConflict = conflictFile is not null;
+			if (hasConflict)
+				switch (conflictStrategy) {
+					case ConflictStrategy.Abort: return;
+					case ConflictStrategy.Throw: throw new FileExistedException(path: conflictFile!.FullName);
+				}
+			else {
+				archive.ExtractToDirectory(destinationDirectoryName);
+				return;
+			}
+			foreach (var entry in archive.Entries) {
+				var path = Path.Combine(destinationDirectoryName, entry.FullName);
+				if (Path.GetDirectoryName(path) is { } dir && !Directory.Exists(dir))
+					Directory.CreateDirectory(dir);
+				else if (hasConflict && File.Exists(path))
+					switch (conflictStrategy) {
+						case ConflictStrategy.Skip: continue;
+						case ConflictStrategy.Rename:
+							path = GetNonConflictingName(path);
+							break;
+					}
+				if (entry.Name == string.Empty)
+					continue;
+				entry.ExtractToFile(path, conflictStrategy == ConflictStrategy.Overwrite);
+			}
+		}
+
+		private static string GetNonConflictingName(string path) {
+			if (!File.Exists(path))
+				return path;
+			string folder = Path.GetDirectoryName(path)!;
+			string name = Path.GetFileNameWithoutExtension(path);
+			string ext = Path.GetExtension(path);
+			for (var i = 1;; ++i) {
+				path = Path.Combine(folder, $"{name}({i}){ext}");
+				if (!File.Exists(path))
+					return path;
+			}
+		}
+
+		public enum ConflictStrategy : byte {
+			/// <summary>
+			///     Throw an <see cref="FileExistedException" />
+			/// </summary>
+			Throw,
+
+			/// <summary>
+			///     Abort the entire operation
+			/// </summary>
+			Abort,
+
+			/// <summary>
+			///     Skip all conflicting entities
+			/// </summary>
+			Skip,
+
+			/// <summary>
+			///     Overwrite existing entities
+			/// </summary>
+			Overwrite,
+
+			/// <summary>
+			///     Rename the coming entities
+			/// </summary>
+			Rename
+		}
 	}
 
 	public static class MiscellaneousExtensions {
 		private static readonly Encoding Encoding = Encoding.GetEncoding("iso-8859-1");
 
+		/// <summary>
+		///     Convert to string using 8-bit no-loss encoding ISO-8859-1
+		/// </summary>
 		public static string ToRawString(this byte[] bytes) => Encoding.GetString(bytes);
 
+		/// <summary>
+		///     Convert to bytes using no-loss 8-bit encoding ISO-8859-1
+		/// </summary>
 		public static byte[] ToRawBytes(this string str) => Encoding.GetBytes(str);
 
+		/// <summary>
+		///     Read all bytes from <paramref name="stream" />
+		/// </summary>
 		public static byte[] ReadBytes(this Stream stream) {
 			using var memoryStream = new MemoryStream();
 			stream.CopyTo(memoryStream);
 			return memoryStream.ToArray();
 		}
 
+		/// <summary>
+		///     Read <paramref name="count" /> bytes from <paramref name="stream" />
+		/// </summary>
 		public static byte[] Read(this Stream stream, int count) {
 			var buffer = new byte[count];
 			int actual = stream.Read(buffer, 0, count);

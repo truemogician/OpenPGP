@@ -131,9 +131,9 @@ namespace Client {
 							path,
 							null,
 							result switch {
-								MessageBoxResult.Yes => EntityEncryptor.ConflictStrategy.Overwrite,
-								MessageBoxResult.No  => EntityEncryptor.ConflictStrategy.Skip,
-								_                    => EntityEncryptor.ConflictStrategy.Throw
+								MessageBoxResult.Yes => ZipArchiveExtensions.ConflictStrategy.Overwrite,
+								MessageBoxResult.No  => ZipArchiveExtensions.ConflictStrategy.Skip,
+								_                    => ZipArchiveExtensions.ConflictStrategy.Throw
 							}
 						);
 					}
