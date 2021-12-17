@@ -1,15 +1,18 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Security.Authentication;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using Core;
 using TrueMogician.Exceptions;
+using DragDropEffects = System.Windows.DragDropEffects;
 using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
+using DragEventArgs = System.Windows.DragEventArgs;
 
 namespace Client {
 	/// <summary>
@@ -70,28 +73,69 @@ namespace Client {
 				: Login(userInfo.Value.Username, userInfo.Value.Password);
 		}
 
-		private void Encrypt(UserCredential user, string path) {
-			try {
-				user.EncryptEntity(path);
-			}
-			catch (FileExistedException ex) {
-				switch (MessageBox.Show($"加密文件{ex.Path!}已存在，选择“是”进行覆盖，选择“否”另选位置保存，选择“取消”终止操作", "文件冲突", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning)) {
-					case MessageBoxResult.Cancel: return;
-					case MessageBoxResult.Yes:
-						File.Delete(ex.Path!);
-						user.EncryptEntity(path);
-						break;
-					case MessageBoxResult.No:
-						_saveDialog.Title = "请选择加密文件的保存路径";
-						_saveDialog.AddExtension = true;
-						_saveDialog.DefaultExt = ".pgp";
-						_saveDialog.FileName = $"{Path.GetFileName(path)}.usr";
-						if (_saveDialog.ShowDialog() != true)
-							return;
-						user.EncryptEntity(path, _saveDialog.FileName);
-						break;
+		private void Encrypt(UserCredential user, string[] paths) {
+			Task.Run(
+				() => {
+					Dispatcher.Invoke(() => StatusTextBlock.Text = paths.Length == 1 ? $"开始加密文件/文件夹{Path.GetFileName(paths[0])}" : $"开始加密${Path.GetFileName(paths[0])}等${paths.Length}个文件/文件夹");
+					string? dstPath = null;
+					try {
+						dstPath = user.EncryptEntities(paths);
+					}
+					catch (FileExistedException ex) {
+						switch (MessageBox.Show($"加密文件{ex.Path!}已存在，选择“是”进行覆盖，选择“否”另选位置保存，选择“取消”终止操作", "文件冲突", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning)) {
+							case MessageBoxResult.Cancel:
+								Dispatcher.Invoke(() => StatusTextBlock.Text = "文件加密已取消");
+								return;
+							case MessageBoxResult.Yes:
+								File.Delete(ex.Path!);
+								dstPath = user.EncryptEntities(paths);
+								break;
+							case MessageBoxResult.No:
+								_saveDialog.Title = "请选择加密文件的保存路径";
+								_saveDialog.AddExtension = true;
+								_saveDialog.DefaultExt = ".pgp";
+								_saveDialog.FileName = (paths.Length == 1 ? Path.GetFileName(paths[0]) : Path.GetDirectoryName(paths[0])) + ".pgp";
+								if (_saveDialog.ShowDialog() != true)
+									return;
+								dstPath = user.EncryptEntities(paths, _saveDialog.FileName);
+								break;
+						}
+					}
+					Dispatcher.Invoke(() => StatusTextBlock.Text = $"加密文件{dstPath}已保存");
 				}
-			}
+			);
+		}
+
+		private void Decrypt(UserCredential user, string path) {
+			Task.Run(
+				() => {
+					Dispatcher.Invoke(() => StatusTextBlock.Text = $"开始解密文件{path}");
+					string? dstPath = null;
+					try {
+						dstPath = user.DecryptEntity(path);
+					}
+					catch (AuthenticationException) {
+						MessageBox.Show("文件并非由该用户加密，无法解密", "认证失败", MessageBoxButton.OK, MessageBoxImage.Error);
+					}
+					catch (FileExistedException) {
+						var result = MessageBox.Show("目标文件夹中部分文件与加密文件冲突，选择“是”进行覆盖，选择“否”跳过，选择“取消”终止操作", "文件冲突", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+						if (result == MessageBoxResult.Cancel) {
+							Dispatcher.Invoke(() => StatusTextBlock.Text = "文件解密已取消");
+							return;
+						}
+						dstPath = user.DecryptEntity(
+							path,
+							null,
+							result switch {
+								MessageBoxResult.Yes => EntityEncryptor.ConflictStrategy.Overwrite,
+								MessageBoxResult.No  => EntityEncryptor.ConflictStrategy.Skip,
+								_                    => EntityEncryptor.ConflictStrategy.Throw
+							}
+						);
+					}
+					Dispatcher.Invoke(() => StatusTextBlock.Text = $"文件已解密到{dstPath}");
+				}
+			);
 		}
 
 		private void LoginButtonClick(object sender, RoutedEventArgs args) {
@@ -153,7 +197,7 @@ namespace Client {
 			try {
 				user = EncryptedUserCredential.Load(path);
 			}
-			catch (FormatException) {
+			catch (InvalidDataException) {
 				MessageBox.Show($"文件或已损坏", "格式错误", MessageBoxButton.OK, MessageBoxImage.Error);
 				return;
 			}
@@ -176,26 +220,25 @@ namespace Client {
 		private void EncryptFileButtonClick(object sender, RoutedEventArgs args) {
 			_openDialog.Title = "请选择需要加密的文件";
 			_openDialog.Filter = "所有文件|*.*";
+			_openDialog.Multiselect = true;
 			_openDialog.CheckPathExists = true;
 			_openDialog.CheckFileExists = true;
 			if (_openDialog.ShowDialog() != true)
 				return;
-			var path = _openDialog.FileName;
 			var user = GetUser();
 			if (user is null)
 				return;
-			Encrypt(user, path);
+			Encrypt(user, _openDialog.FileNames);
 		}
 
 		private void EncryptDirectoryButtonClick(object sender, RoutedEventArgs args) {
 			_folderDialog.Description = "请选择需要加密的文件夹";
 			if (_folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.Cancel)
 				return;
-			var path = _folderDialog.SelectedPath;
 			var user = GetUser();
 			if (user is null)
 				return;
-			Encrypt(user, path);
+			Encrypt(user, new[] {_folderDialog.SelectedPath});
 		}
 
 		private void DecryptFileButtonClick(object sender, RoutedEventArgs args) {
@@ -214,6 +257,36 @@ namespace Client {
 			}
 			catch (AuthenticationException) {
 				MessageBox.Show("文件并非由该用户加密，无法解密", "认证失败", MessageBoxButton.OK, MessageBoxImage.Error);
+			}
+		}
+
+		private void ContainerDragEnter(object sender, DragEventArgs args) => args.Effects = DragDropEffects.All;
+
+		private void GridDragEnter(object sender, DragEventArgs args) {
+			string[]? paths = args.GetFileNames();
+			if (paths is null) {
+				args.Effects = DragDropEffects.None;
+				return;
+			}
+			if (sender.Equals(EncryptDragDropGrid))
+				args.Effects = DragDropEffects.All;
+			else {
+				if (paths.Length == 1 && Path.GetExtension(paths[0]) == ".pgp")
+					args.Effects = DragDropEffects.All;
+				else
+					args.Effects = DragDropEffects.None;
+			}
+		}
+
+		private void GridDrop(object sender, DragEventArgs args) {
+			if (args.AllowedEffects.HasFlag(DragDropEffects.Copy) && args.GetFileNames() is { } paths) {
+				var user = GetUser();
+				if (user is null)
+					return;
+				if (sender.Equals(EncryptDragDropGrid))
+					Encrypt(user, paths);
+				else
+					Decrypt(user, paths.Single());
 			}
 		}
 
